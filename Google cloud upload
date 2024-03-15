@@ -1,0 +1,75 @@
+%pip install google-cloud-storage
+
+
+import os
+
+from datetime import date
+import time
+
+today = date.today()
+yearNow = today.year
+monthNow = today.month
+dayNow = today.day
+yesterday = dayNow - 1
+str1 = '_'
+preToday = str(today) + str1
+t= time.localtime()
+h= t.tm_hour
+m= t.tm_min
+
+jobtimeHour = str(today) + '_' + str(h) + '_'
+
+jobtimeNow = str(today) + '_' + str(h) + '_' + str(m) + '_'
+
+def find_files_with_substring(directory, substring):
+    """
+    Searches for files within 'directory' that contain 'substring' in their filenames.
+
+    Parameters:
+    - directory (str): The directory path to search in.
+    - substring (str): The substring to look for in filenames.
+
+    Returns:
+    - list of str: A list of paths to files that contain the substring in their filenames.
+    """
+    matching_files = []
+    # Walk through all the files in the directory
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if substring in file:
+                # Construct the full path and add it to the list
+                full_path = os.path.join(root, file)
+                matching_files.append(full_path)
+    return matching_files
+
+# Example usage
+directory_to_search = 'C:\\Users\\zakwi\\Desktop\\Data Import\\AD MANAGER DATA'  
+substring_to_find = jobtimeHour  
+
+matching_files = find_files_with_substring(directory_to_search, substring_to_find)
+for file_path in matching_files:
+    sauce_file_path = file_path
+
+from google.cloud import storage
+
+def upload_to_gcs(bucket_name, source_file_path, destination_blob_name, credentials_file):
+    # Initialize the Google Cloud Storage client with the credentials
+    storage_client = storage.Client.from_service_account_json(credentials_file)
+
+    # Get the target bucket
+    bucket = storage_client.bucket(bucket_name)
+
+    # Upload the file to the bucket
+    blob = bucket.blob(destination_blob_name)
+    blob.upload_from_filename(source_file_path)
+
+    print(f"File {source_file_path} uploaded to gs://{bucket_name}/{destination_blob_name}")
+
+if __name__ == "__main__":
+    # Replace the following variables with your specific values
+    BUCKET_NAME = "upload_python_script_bucket"
+    SOURCE_FILE_PATH = sauce_file_path
+    DESTINATION_BLOB_NAME = "%s.csv.gz" % (jobtimeNow)
+    CREDENTIALS_FILE = "C:\\Users\\zakwi\\Desktop\\BQ API\\python-upload-key.json"
+    
+    upload_to_gcs(BUCKET_NAME, SOURCE_FILE_PATH, DESTINATION_BLOB_NAME, CREDENTIALS_FILE)
